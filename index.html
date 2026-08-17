@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Convertidor Kobo .epub.annot</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f3;
+      --ink: #17201c;
+      --muted: #65716b;
+      --panel: #ffffff;
+      --line: #dfe5dd;
+      --accent: #146c5c;
+      --accent-strong: #0e5448;
+      --accent-soft: #dff3ed;
+      --amber: #d9852b;
+      --shadow: 0 18px 60px rgba(21, 32, 28, .12);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 16% 8%, rgba(20, 108, 92, .14), transparent 30rem),
+        linear-gradient(135deg, #f8faf8 0%, var(--bg) 56%, #edf2ef 100%);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 42px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr);
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(2rem, 6vw, 4.8rem);
+      line-height: .94;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 18px 0 0;
+      max-width: 700px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .status-panel,
+    .workspace,
+    .preview,
+    .empty {
+      background: rgba(255, 255, 255, .86);
+      border: 1px solid rgba(223, 229, 221, .9);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      border-radius: 8px;
+    }
+
+    .status-panel {
+      padding: 18px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .stat {
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfb;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.55rem;
+      line-height: 1.1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      min-height: 640px;
+      overflow: hidden;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 18px;
+      border-right: 1px solid var(--line);
+      background: #fbfcfb;
+    }
+
+    .dropzone {
+      position: relative;
+      display: grid;
+      min-height: 190px;
+      place-items: center;
+      padding: 22px;
+      border: 1.5px dashed #aebbb4;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #ffffff, #f4f8f6);
+      text-align: center;
+      transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .dropzone.dragging {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      transform: translateY(-1px);
+    }
+
+    .dropzone input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-mark {
+      width: 54px;
+      height: 54px;
+      margin: 0 auto 14px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-size: 1.55rem;
+      font-weight: 800;
+    }
+
+    .dropzone strong {
+      display: block;
+      font-size: 1rem;
+    }
+
+    .dropzone small,
+    .hint,
+    .file-name {
+      color: var(--muted);
+    }
+
+    .file-name {
+      min-height: 1.4em;
+      overflow-wrap: anywhere;
+      font-size: .9rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    label,
+    .label {
+      font-weight: 700;
+      font-size: .9rem;
+    }
+
+    select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 12px;
+    }
+
+    .check {
+      display: grid;
+      grid-template-columns: 20px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .check input {
+      width: 18px;
+      height: 18px;
+      margin: 2px 0 0;
+      accent-color: var(--accent);
+    }
+
+    .check span {
+      display: block;
+      color: var(--muted);
+      font-size: .86rem;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .btn {
+      min-height: 46px;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 800;
+      color: #fff;
+      background: var(--accent);
+      transition: transform .16s ease, background .16s ease, opacity .16s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--accent-strong);
+      transform: translateY(-1px);
+    }
+
+    .btn.secondary {
+      color: var(--accent-strong);
+      background: var(--accent-soft);
+    }
+
+    .btn.secondary:hover:not(:disabled) {
+      background: #c7e9df;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: .46;
+    }
+
+    .message {
+      min-height: 44px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #eef3f0;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.4;
+    }
+
+    .message.error {
+      background: #fff0e5;
+      color: #8a4100;
+    }
+
+    .preview {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-width: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      background: #fff;
+    }
+
+    .preview-toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .preview-toolbar h2 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .pill {
+      white-space: nowrap;
+      border-radius: 999px;
+      padding: 7px 11px;
+      color: var(--accent-strong);
+      background: var(--accent-soft);
+      font-size: .82rem;
+      font-weight: 800;
+    }
+
+    .preview-body {
+      min-width: 0;
+      overflow: auto;
+      padding: 18px;
+    }
+
+    .empty {
+      display: grid;
+      min-height: 100%;
+      place-items: center;
+      box-shadow: none;
+      background: #f9faf9;
+      color: var(--muted);
+      text-align: center;
+      padding: 28px;
+    }
+
+    .book-title {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 3vw, 2.6rem);
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .meta {
+      margin: 0 0 22px;
+      color: var(--muted);
+    }
+
+    .annotation-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .annotation {
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--accent);
+      border-radius: 8px;
+      padding: 15px;
+      background: #fff;
+    }
+
+    .annotation-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+
+    .annotation-id {
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    blockquote {
+      margin: 0;
+      padding: 0 0 0 13px;
+      border-left: 3px solid #b8c8c1;
+      color: #26322e;
+      line-height: 1.55;
+    }
+
+    .note {
+      margin-top: 12px;
+      padding: 11px 12px;
+      border-radius: 8px;
+      background: #fff8ef;
+      color: #5f3b11;
+      border: 1px solid #f0d9bc;
+      line-height: 1.5;
+    }
+
+    .note b {
+      color: #8a4b0f;
+    }
+
+    .raw-output {
+      width: 100%;
+      min-height: 520px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: #17201c;
+      background: #fbfcfb;
+    }
+
+    @media (max-width: 860px) {
+      .app {
+        width: min(100% - 20px, 680px);
+        padding-top: 20px;
+      }
+
+      header,
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <section>
+        <h1>Convertidor Kobo .epub.annot</h1>
+        <p class="subtitle">Carrega les anotacions del Kobo i transforma-les en un document Markdown o HTML net, ordenat i llest per guardar. Tot passa dins del teu navegador.</p>
+      </section>
+
+      <aside class="status-panel" aria-label="Resum del fitxer">
+        <div class="stat-grid">
+          <div class="stat"><strong id="statNotes">0</strong><span>Notes</span></div>
+          <div class="stat"><strong id="statComments">0</strong><span>Comentaris</span></div>
+          <div class="stat"><strong id="statProgress">0%</strong><span>Progrés</span></div>
+        </div>
+      </aside>
+    </header>
+
+    <section class="workspace">
+      <aside class="controls" aria-label="Controls de conversió">
+        <div id="dropzone" class="dropzone">
+          <input id="fileInput" type="file" accept=".annot,.epub.annot,text/xml,application/xml">
+          <div>
+            <div class="upload-mark">+</div>
+            <strong>Carrega un fitxer .epub.annot</strong>
+            <small>Arrossega'l aquí o fes clic per seleccionar-lo</small>
+          </div>
+        </div>
+
+        <div id="fileName" class="file-name">Cap fitxer seleccionat</div>
+
+        <div class="actions">
+          <button id="downloadMd" class="btn" disabled>Baixar MD</button>
+          <button id="downloadHtml" class="btn secondary" disabled>Baixar HTML</button>
+          <button id="downloadExcel" class="btn secondary" disabled>Baixar Excel</button>
+        </div>
+
+        <div id="message" class="message">Esperant un fitxer Kobo per convertir.</div>
+
+        <div class="field">
+          <label for="formatSelect">Format de previsualització</label>
+          <select id="formatSelect">
+            <option value="preview">Vista llegible</option>
+            <option value="markdown">Markdown</option>
+            <option value="html">HTML</option>
+          </select>
+        </div>
+
+        <label class="check">
+          <input id="repairText" type="checkbox" checked>
+          <span><b>Reparar accents mal codificats</b><br>Útil quan apareixen fragments com “Ã©”, “Ã²” o “Â·”.</span>
+        </label>
+
+        <label class="check">
+          <input id="includeMeta" type="checkbox" checked>
+          <span><b>Incloure metadades</b><br>Afegeix data, autor, progrés i ubicació a cada nota.</span>
+        </label>
+      </aside>
+
+      <section class="preview" aria-label="Previsualització">
+        <div class="preview-toolbar">
+          <h2 id="previewTitle">Previsualització</h2>
+          <span id="previewBadge" class="pill">Sense fitxer</span>
+        </div>
+        <div id="previewBody" class="preview-body">
+          <div class="empty">
+            <div>
+              <strong>Les anotacions apareixeran aquí.</strong>
+              <p>Quan carreguis el fitxer, podràs revisar el resultat abans de descarregar-lo.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      sourceName: "",
+      file: null,
+      publication: { title: "Anotacions Kobo", identifier: "" },
+      annotations: [],
+      warning: ""
+    };
+
+    const els = {
+      dropzone: document.getElementById("dropzone"),
+      fileInput: document.getElementById("fileInput"),
+      fileName: document.getElementById("fileName"),
+      formatSelect: document.getElementById("formatSelect"),
+      repairText: document.getElementById("repairText"),
+      includeMeta: document.getElementById("includeMeta"),
+      downloadMd: document.getElementById("downloadMd"),
+      downloadHtml: document.getElementById("downloadHtml"),
+      downloadExcel: document.getElementById("downloadExcel"),
+      message: document.getElementById("message"),
+      previewTitle: document.getElementById("previewTitle"),
+      previewBadge: document.getElementById("previewBadge"),
+      previewBody: document.getElementById("previewBody"),
+      statNotes: document.getElementById("statNotes"),
+      statComments: document.getElementById("statComments"),
+      statProgress: document.getElementById("statProgress")
+    };
+
+    function localName(element, name) {
+      return element && element.localName === name;
+    }
+
+    function firstChildByName(parent, name) {
+      if (!parent) return null;
+      return Array.from(parent.children).find((child) => localName(child, name)) || null;
+    }
+
+    function childrenByName(parent, name) {
+      if (!parent) return [];
+      return Array.from(parent.children).filter((child) => localName(child, name));
+    }
+
+    function textFromNode(parent, childName) {
+      const child = firstChildByName(parent, childName);
+      return child ? cleanText(child.textContent || "") : "";
+    }
+
+    function repairMojibake(text) {
+      const replacements = new Map([
+        ["Ã€", "À"], ["Ã", "Á"], ["Ã‚", "Â"], ["Ã‡", "Ç"], ["Ãˆ", "È"], ["Ã‰", "É"], ["ÃŠ", "Ê"], ["Ã", "Í"],
+        ["Ã’", "Ò"], ["Ã“", "Ó"], ["Ãš", "Ú"], ["Ãœ", "Ü"], ["Ã ", "à"], ["Ã¡", "á"], ["Ã¢", "â"], ["Ã§", "ç"],
+        ["Ã¨", "è"], ["Ã©", "é"], ["Ãª", "ê"], ["Ã­", "í"], ["Ã¯", "ï"], ["Ã²", "ò"], ["Ã³", "ó"], ["Ãº", "ú"],
+        ["Ã¼", "ü"], ["Ã±", "ñ"], ["Â·", "·"], ["Â«", "«"], ["Â»", "»"], ["Â¿", "¿"], ["Â¡", "¡"], ["â€™", "’"],
+        ["â€œ", "“"], ["â€", "”"], ["â€“", "–"], ["â€”", "—"], ["â€¦", "…"], ["Â", ""]
+      ]);
+      let fixed = text;
+      replacements.forEach((value, key) => {
+        fixed = fixed.split(key).join(value);
+      });
+      return fixed;
+    }
+
+    function cleanText(text) {
+      const normalized = text.replace(/\s+/g, " ").trim();
+      return els.repairText.checked ? repairMojibake(normalized) : normalized;
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function markdownEscape(text) {
+      return String(text).replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
+    }
+
+    function slugify(text) {
+      return (text || "kobo-anotacions")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .toLowerCase() || "kobo-anotacions";
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleString("ca-ES", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function parseXmlFragment(fragmentText) {
+      const wrapped = `<annotationSet xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns="http://ns.adobe.com/digitaleditions/annotations">${fragmentText}</annotationSet>`;
+      const parser = new DOMParser();
+      return parser.parseFromString(wrapped, "application/xml");
+    }
+
+    function publicationFromXml(xml, fallbackText = "") {
+      const publication = firstChildByName(xml.documentElement, "publication");
+      const title = textFromNode(publication, "title") || "Anotacions Kobo";
+      const identifier = textFromNode(publication, "identifier");
+      if (publication || !fallbackText) return { title, identifier };
+
+      const publicationMatch = fallbackText.match(/<publication\b[\s\S]*?<\/publication>/i);
+      if (!publicationMatch) return { title, identifier };
+      const publicationXml = parseXmlFragment(publicationMatch[0]);
+      const fallbackPublication = firstChildByName(publicationXml.documentElement, "publication");
+      return {
+        title: textFromNode(fallbackPublication, "title") || title,
+        identifier: textFromNode(fallbackPublication, "identifier") || identifier
+      };
+    }
+
+	function annotationFromElement(annotation, index) {
+		const target = firstChildByName(annotation, "target");
+		const fragment = firstChildByName(target, "fragment");
+		const textElement = fragment ? firstChildByName(fragment, "text") : null;
+		
+		// Buscar la nota dins de <content>, no només dins de <annotation>
+		const contentWrapper = firstChildByName(annotation, "content");
+		const contentTextElement = contentWrapper ? firstChildByName(contentWrapper, "text") : null;
+		const noteText = cleanText(contentTextElement ? contentTextElement.textContent || "" : "");
+		
+		const contentText = cleanText(textElement ? textElement.textContent || "" : "");
+		const progressRaw = fragment ? fragment.getAttribute("progress") : "";
+		const progress = progressRaw ? Math.round(Number(progressRaw) * 1000) / 10 : "";
+
+		return {
+		  id: textFromNode(annotation, "identifier") || annotation.getAttribute("id") || String(index + 1),
+		  creator: textFromNode(annotation, "creator"),
+		  date: textFromNode(annotation, "date"),
+		  start: fragment ? fragment.getAttribute("start") || "" : "",
+		  end: fragment ? fragment.getAttribute("end") || "" : "",
+		  progress,
+		  content: contentText,
+		  note: noteText
+		};
+	}
+
+    function annotationsFromXml(xml) {
+      return childrenByName(xml.documentElement, "annotation")
+        .map(annotationFromElement)
+        .filter((item) => item.content || item.note);
+    }
+
+    function parseLenientAnnotXml(xmlText) {
+      const publication = publicationFromXml(parseXmlFragment(""), xmlText);
+      const matches = xmlText.match(/<annotation\b[\s\S]*?<\/annotation>/gi) || [];
+      const annotations = matches.map((block, index) => {
+        const parsed = parseXmlFragment(block);
+        if (parsed.querySelector("parsererror")) return null;
+        const annotation = firstChildByName(parsed.documentElement, "annotation");
+        return annotation ? annotationFromElement(annotation, index) : null;
+      }).filter((item) => item && (item.content || item.note));
+
+      return {
+        publication,
+        annotations,
+        warning: "El fitxer sembla incomplet o té XML mal format. S'han recuperat les anotacions completes disponibles."
+      };
+    }
+
+    function parseAnnotXml(xmlText) {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(xmlText, "application/xml");
+      const parseError = xml.querySelector("parsererror");
+      if (parseError) {
+        return parseLenientAnnotXml(xmlText);
+      }
+
+      const publication = publicationFromXml(xml);
+      const annotations = annotationsFromXml(xml);
+
+      return { publication, annotations, warning: "" };
+    }
+
+	function renderReadable() {
+	  const commentCount = state.annotations.filter((item) => item.note).length;
+	  const rows = state.annotations.map((item) => `
+		<article class="annotation">
+		  <div class="annotation-head">
+			<span class="annotation-id">#${escapeHtml(item.id)}</span>
+			${item.progress !== "" ? `<span>${escapeHtml(item.progress)}%</span>` : ""}
+			${item.date ? `<span>${escapeHtml(formatDate(item.date))}</span>` : ""}
+			${item.creator ? `<span>${escapeHtml(item.creator)}</span>` : ""}
+		  </div>
+		  ${item.content ? `<blockquote>${escapeHtml(item.content)}</blockquote>` : ""}
+		  ${item.note ? `<div class="note"><b>Comentari:</b> ${escapeHtml(item.note)}</div>` : ""}
+		</article>
+	  `).join("");
+
+	  els.previewBody.innerHTML = `
+		<h2 class="book-title">${escapeHtml(state.publication.title)}</h2>
+		<p class="meta">${state.annotations.length} notes · ${commentCount} comentaris${state.publication.identifier ? ` · ${escapeHtml(state.publication.identifier)}` : ""}</p>
+		<div class="annotation-list">${rows}</div>
+	  `;
+	}
+
+    function buildMarkdown() {
+      const lines = [`# ${state.publication.title}`, ""];
+      if (state.publication.identifier) lines.push(`Identificador: ${state.publication.identifier}`, "");
+      lines.push(`Notes: ${state.annotations.length}`, "");
+
+      state.annotations.forEach((item) => {
+        lines.push(`## Nota ${markdownEscape(item.id)}`);
+        if (els.includeMeta.checked) {
+          const meta = [];
+          if (item.progress !== "") meta.push(`Progrés: ${item.progress}%`);
+          if (item.date) meta.push(`Data: ${formatDate(item.date)}`);
+          if (item.creator) meta.push(`Autor: ${item.creator}`);
+          if (item.start) meta.push(`Inici: ${item.start}`);
+          if (item.end) meta.push(`Final: ${item.end}`);
+          if (meta.length) lines.push("", meta.map(markdownEscape).join("  \n"));
+        }
+        if (item.content) lines.push("", `> ${item.content.replace(/\n/g, "\n> ")}`);
+        if (item.note) lines.push("", `**Comentari:** ${item.note}`);
+        lines.push("");
+      });
+
+      return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+    }
+
+    function buildHtmlDocument() {
+      const annotationHtml = state.annotations.map((item) => {
+        const meta = [];
+        if (els.includeMeta.checked) {
+          if (item.progress !== "") meta.push(`Progrés: ${item.progress}%`);
+          if (item.date) meta.push(`Data: ${formatDate(item.date)}`);
+          if (item.creator) meta.push(`Autor: ${item.creator}`);
+          if (item.start) meta.push(`Inici: ${item.start}`);
+          if (item.end) meta.push(`Final: ${item.end}`);
+        }
+        return `
+          <article class="annotation">
+            <h2>Nota ${escapeHtml(item.id)}</h2>
+            ${meta.length ? `<p class="meta">${meta.map(escapeHtml).join(" · ")}</p>` : ""}
+            ${item.content ? `<blockquote>${escapeHtml(item.content)}</blockquote>` : ""}
+            ${item.note ? `<p class="note"><strong>Comentari:</strong> ${escapeHtml(item.note)}</p>` : ""}
+          </article>`;
+      }).join("\n");
+
+      return `<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(state.publication.title)}</title>
+  <style>
+    body { margin: 0; background: #f7f8f5; color: #17201c; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.55; }
+    main { width: min(880px, calc(100% - 32px)); margin: 0 auto; padding: 42px 0; }
+    h1 { margin: 0 0 8px; font-size: clamp(2rem, 6vw, 4rem); line-height: 1; letter-spacing: 0; }
+    .summary { color: #65716b; margin: 0 0 28px; }
+    .annotation { background: #fff; border: 1px solid #dfe5dd; border-left: 5px solid #146c5c; border-radius: 8px; padding: 18px; margin: 14px 0; }
+    .annotation h2 { margin: 0 0 8px; font-size: 1.1rem; }
+    .meta { color: #65716b; font-size: .92rem; margin: 0 0 12px; overflow-wrap: anywhere; }
+    blockquote { margin: 0; padding-left: 14px; border-left: 3px solid #b8c8c1; }
+    .note { background: #fff8ef; border: 1px solid #f0d9bc; border-radius: 8px; color: #5f3b11; padding: 12px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>${escapeHtml(state.publication.title)}</h1>
+    <p class="summary">${state.annotations.length} notes convertides${state.publication.identifier ? ` · ${escapeHtml(state.publication.identifier)}` : ""}</p>
+    ${annotationHtml}
+  </main>
+</body>
+</html>
+`;
+    }
+
+    function excelCell(value) {
+      return `<Cell><Data ss:Type="String">${escapeHtml(value || "")}</Data></Cell>`;
+    }
+
+    function buildExcelDocument() {
+      const columns = [
+        "publication_title",
+        "publication_identifier",
+        "annotation_id",
+        "creator",
+        "date_iso",
+        "date_local",
+        "progress_percent",
+        "target_start",
+        "target_end",
+        "highlight_text",
+        "note_text"
+      ];
+
+      const header = columns.map(excelCell).join("");
+      const rows = state.annotations.map((item) => {
+        const values = [
+          state.publication.title,
+          state.publication.identifier,
+          item.id,
+          item.creator,
+          item.date,
+          formatDate(item.date),
+          item.progress !== "" ? `${item.progress}` : "",
+          item.start,
+          item.end,
+          item.content,
+          item.note
+        ];
+        return `<Row>${values.map(excelCell).join("")}</Row>`;
+      }).join("\n");
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+          xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:x="urn:schemas-microsoft-com:office:excel"
+          xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+          xmlns:html="http://www.w3.org/TR/REC-html40">
+  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+    <Title>${escapeHtml(state.publication.title)}</Title>
+  </DocumentProperties>
+  <Styles>
+    <Style ss:ID="Header">
+      <Font ss:Bold="1"/>
+      <Interior ss:Color="#DFF3ED" ss:Pattern="Solid"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="Anotacions Kobo">
+    <Table>
+      <Column ss:Width="210"/>
+      <Column ss:Width="250"/>
+      <Column ss:Width="90"/>
+      <Column ss:Width="110"/>
+      <Column ss:Width="150"/>
+      <Column ss:Width="150"/>
+      <Column ss:Width="110"/>
+      <Column ss:Width="330"/>
+      <Column ss:Width="330"/>
+      <Column ss:Width="520"/>
+      <Column ss:Width="360"/>
+      <Row ss:StyleID="Header">${header}</Row>
+      ${rows}
+    </Table>
+    <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+      <FreezePanes/>
+      <FrozenNoSplit/>
+      <SplitHorizontal>1</SplitHorizontal>
+      <TopRowBottomPane>1</TopRowBottomPane>
+      <ActivePane>2</ActivePane>
+    </WorksheetOptions>
+  </Worksheet>
+</Workbook>
+`;
+    }
+
+    function renderRaw(format) {
+      const textarea = document.createElement("textarea");
+      textarea.className = "raw-output";
+      textarea.readOnly = true;
+      textarea.value = format === "markdown" ? buildMarkdown() : buildHtmlDocument();
+      els.previewBody.innerHTML = "";
+      els.previewBody.appendChild(textarea);
+    }
+
+    function updateStats() {
+      const commentCount = state.annotations.filter((item) => item.note).length;
+      const lastProgress = state.annotations.reduce((max, item) => {
+        const value = Number(item.progress);
+        return Number.isFinite(value) ? Math.max(max, value) : max;
+      }, 0);
+      els.statNotes.textContent = state.annotations.length;
+      els.statComments.textContent = commentCount;
+      els.statProgress.textContent = `${Math.round(lastProgress)}%`;
+      els.previewBadge.textContent = state.annotations.length ? `${state.annotations.length} notes` : "Sense fitxer";
+    }
+
+    function updatePreview() {
+      if (!state.annotations.length) return;
+      els.previewTitle.textContent = els.formatSelect.value === "preview" ? "Previsualització" : els.formatSelect.options[els.formatSelect.selectedIndex].text;
+      if (els.formatSelect.value === "preview") renderReadable();
+      if (els.formatSelect.value === "markdown") renderRaw("markdown");
+      if (els.formatSelect.value === "html") renderRaw("html");
+    }
+
+    function clearPreview() {
+      els.previewTitle.textContent = "Previsualització";
+      els.previewBadge.textContent = "Sense fitxer";
+      els.previewBody.innerHTML = `
+        <div class="empty">
+          <div>
+            <strong>Les anotacions apareixeran aquí.</strong>
+            <p>Quan carreguis el fitxer, podràs revisar el resultat abans de descarregar-lo.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function setMessage(text, isError = false) {
+      els.message.textContent = text;
+      els.message.classList.toggle("error", isError);
+    }
+
+    function downloadFile(content, extension, mime) {
+      const title = slugify(state.publication.title || state.sourceName);
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${title}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function handleFile(file) {
+      if (!file) return;
+      state.file = file;
+      state.sourceName = file.name;
+      els.fileName.textContent = file.name;
+      setMessage("Llegint el fitxer...");
+
+      try {
+        const xmlText = await file.text();
+        const parsed = parseAnnotXml(xmlText);
+        if (!parsed.annotations.length) {
+          throw new Error("No s'han trobat anotacions dins del fitxer.");
+        }
+        state.publication = parsed.publication;
+        state.annotations = parsed.annotations;
+        state.warning = parsed.warning || "";
+        els.downloadMd.disabled = false;
+        els.downloadHtml.disabled = false;
+        els.downloadExcel.disabled = false;
+        updateStats();
+        updatePreview();
+        setMessage(parsed.warning || `Fitxer convertit correctament: ${parsed.annotations.length} notes disponibles.`, Boolean(parsed.warning));
+      } catch (error) {
+        state.annotations = [];
+        state.warning = "";
+        updateStats();
+        clearPreview();
+        els.downloadMd.disabled = true;
+        els.downloadHtml.disabled = true;
+        els.downloadExcel.disabled = true;
+        setMessage(error.message || "No s'ha pogut convertir el fitxer.", true);
+      }
+    }
+
+    els.fileInput.addEventListener("change", (event) => {
+      handleFile(event.target.files[0]);
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      els.dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        els.dropzone.classList.add("dragging");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+      els.dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        els.dropzone.classList.remove("dragging");
+      });
+    });
+
+    els.dropzone.addEventListener("drop", (event) => {
+      handleFile(event.dataTransfer.files[0]);
+    });
+
+    els.formatSelect.addEventListener("change", updatePreview);
+    els.includeMeta.addEventListener("change", updatePreview);
+    els.repairText.addEventListener("change", () => {
+      if (state.file) handleFile(state.file);
+    });
+
+    els.downloadMd.addEventListener("click", () => {
+      downloadFile(buildMarkdown(), "md", "text/markdown;charset=utf-8");
+    });
+
+    els.downloadHtml.addEventListener("click", () => {
+      downloadFile(buildHtmlDocument(), "html", "text/html;charset=utf-8");
+    });
+
+    els.downloadExcel.addEventListener("click", () => {
+      downloadFile(buildExcelDocument(), "xls", "application/vnd.ms-excel;charset=utf-8");
+    });
+  </script>
+</body>
+</html>
