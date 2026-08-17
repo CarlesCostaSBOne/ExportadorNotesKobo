@@ -937,39 +937,55 @@
       URL.revokeObjectURL(url);
     }
 
-    async function handleFile(file) {
-      if (!file) return;
-      state.file = file;
-      state.sourceName = file.name;
-      els.fileName.textContent = file.name;
-      setMessage("Llegint el fitxer...");
+	async function handleFile(file) {
+	  if (!file) return;
+	  state.file = file;
+	  state.sourceName = file.name;
+	  els.fileName.textContent = file.name;
+	  setMessage("Llegint el fitxer...");
 
-      try {
-        const xmlText = await file.text();
-        const parsed = parseAnnotXml(xmlText);
-        if (!parsed.annotations.length) {
-          throw new Error("No s'han trobat anotacions dins del fitxer.");
-        }
-        state.publication = parsed.publication;
-        state.annotations = parsed.annotations;
-        state.warning = parsed.warning || "";
-        els.downloadMd.disabled = false;
-        els.downloadHtml.disabled = false;
-        els.downloadExcel.disabled = false;
-        updateStats();
-        updatePreview();
-        setMessage(parsed.warning || `Fitxer convertit correctament: ${parsed.annotations.length} notes disponibles.`, Boolean(parsed.warning));
-      } catch (error) {
-        state.annotations = [];
-        state.warning = "";
-        updateStats();
-        clearPreview();
-        els.downloadMd.disabled = true;
-        els.downloadHtml.disabled = true;
-        els.downloadExcel.disabled = true;
-        setMessage(error.message || "No s'ha pogut convertir el fitxer.", true);
-      }
-    }
+	  try {
+		const xmlText = await file.text();
+		const parsed = parseAnnotXml(xmlText);
+		
+		// ORDENAR ANOTACIONS
+		parsed.annotations.sort((a, b) => {
+		  const progA = a.progress !== "" ? Number(a.progress) : -1;
+		  const progB = b.progress !== "" ? Number(b.progress) : -1;
+		  if (progA !== progB) return progA - progB;
+		  
+		  if (a.date && b.date) {
+			const dateA = new Date(a.date).getTime();
+			const dateB = new Date(b.date).getTime();
+			if (dateA !== dateB) return dateA - dateB;
+		  }
+		  
+		  return String(a.id).localeCompare(String(b.id));
+		});
+		
+		if (!parsed.annotations.length) {
+		  throw new Error("No s'han trobat anotacions dins del fitxer.");
+		}
+		state.publication = parsed.publication;
+		state.annotations = parsed.annotations;
+		state.warning = parsed.warning || "";
+		els.downloadMd.disabled = false;
+		els.downloadHtml.disabled = false;
+		els.downloadExcel.disabled = false;
+		updateStats();
+		updatePreview();
+		setMessage(parsed.warning || `Fitxer convertit correctament: ${parsed.annotations.length} notes disponibles.`, Boolean(parsed.warning));
+	  } catch (error) {
+		state.annotations = [];
+		state.warning = "";
+		updateStats();
+		clearPreview();
+		els.downloadMd.disabled = true;
+		els.downloadHtml.disabled = true;
+		els.downloadExcel.disabled = true;
+		setMessage(error.message || "No s'ha pogut convertir el fitxer.", true);
+	  }
+	}
 
     els.fileInput.addEventListener("change", (event) => {
       handleFile(event.target.files[0]);
